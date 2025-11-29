@@ -1,0 +1,268 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f2f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  min-height: 100vh;
+}
+
+.app-header {
+  background-color: #2c2f33;
+  padding: 1rem;
+  text-align: center;
+  color: white;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app {
+  width: 100%;
+  min-height: calc(100vh - 120px);
+  padding: 0;
+  margin: 0;
+}
+
+.main-content {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 120px);
+  gap: 0;
+}
+
+.sidebar {
+  width: 30%;
+  background-color: #ffffff;
+  padding: 20px;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  position: sticky;
+  top: 120px;
+  height: calc(100vh - 120px);
+}
+
+.content {
+  width: 70%;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+h1 {
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.warning,
+.message {
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+}
+
+.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-color: #ffeeba;
+  margin: 10px 0 0 0;
+}
+
+.message {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.login-section {
+  max-width: 500px;
+  margin: 40px auto;
+}
+
+.user-profile-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-profile-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.user-profile-card p {
+  margin: 8px 0;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.user-profile-card strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.user-actions {
+  margin-top: 20px;
+}
+
+.user-actions button {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.user-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+h2 {
+  color: #1c1e21;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input,
+textarea {
+  padding: 12px;
+  border: 1px solid #ccd0d5;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #1877f2;
+  box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+  outline: none;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+button {
+  padding: 12px 20px;
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #166fe5;
+}
+
+.hint {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  border-left: 3px solid #6c757d;
+}
+
+.hint p {
+  margin: 5px 0;
+}
+
+.posts-section {
+  width: 100%;
+}
+
+.posts-section h2 {
+  color: #1c1e21;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.post {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.post:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #1877f2;
+}
+
+.post p {
+  margin: 0 0 10px 0;
+  color: #1877f2;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.post div {
+  color: #1c1e21;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.post div script {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    top: 0;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .content {
+    width: 100%;
+  }
+}

