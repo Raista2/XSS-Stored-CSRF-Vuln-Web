@@ -1,6 +1,7 @@
 // users.controller.js
 const usersRepository = require('../repositories/users.repository');
 const baseResponse = require('../utils/baseResponse.util');
+const { clearCsrfToken } = require('../middleware/csrf.middleware');
 
 class UsersController {
     async login(req, res) {
@@ -13,16 +14,16 @@ class UsersController {
                 return baseResponse(res, false, 401, 'Username tidak ditemukan', null);
             }
 
-            // VULNERABLE: Plain text password comparison (untuk demo purposes)
+            // Plain text password comparison (untuk demo purposes)
             if (user.password !== password) {
                 return baseResponse(res, false, 401, 'Password salah', null);
             }
 
-            // VULNERABLE: Cookie tanpa HttpOnly dan SameSite=None
+            // SECURED: Cookie dengan HttpOnly dan SameSite=Strict
             res.cookie('user', username, {
-                httpOnly: false,
-                sameSite: 'none',
-                secure: true, // wajib untuk SameSite=None
+                httpOnly: true, // Mencegah akses JavaScript ke cookie
+                sameSite: 'strict', // Mencegah CSRF
+                secure: process.env.NODE_ENV === 'production', // HTTPS only di production
                 maxAge: 24 * 60 * 60 * 1000,
                 path: '/'
             });
@@ -40,7 +41,16 @@ class UsersController {
 
     async logout(req, res) {
         try {
+            const username = req.cookies.user;
+            
+            // Clear CSRF token dari memory
+            if (username) {
+                clearCsrfToken(username);
+            }
+            
             res.clearCookie('user');
+            res.clearCookie('XSRF-TOKEN');
+            
             return baseResponse(res, true, 200, 'Logout berhasil', null);
         } catch (error) {
             console.error('Error in logout:', error);
@@ -87,7 +97,8 @@ class UsersController {
                 return baseResponse(res, false, 400, 'Email harus diisi', null);
             }
 
-            // VULNERABLE: Tidak ada CSRF token validation!
+            // SECURED: CSRF token sudah divalidasi oleh middleware
+            // Input email sudah disanitasi oleh XSS middleware
             const updatedUser = await usersRepository.updateEmail(username, email);
 
             return baseResponse(res, true, 200, 'Email berhasil diubah', {

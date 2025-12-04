@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import DOMPurify from 'dompurify'
 import './App.css'
 
 const API_URL = 'http://localhost:3000';
@@ -11,6 +12,7 @@ function App() {
   const [newPost, setNewPost] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
 
   // Check if user is logged in
   useEffect(() => {
@@ -18,7 +20,20 @@ function App() {
     loadPosts();
   }, []);
 
-  
+  // Get CSRF token saat user login
+  const getCsrfToken = async () => {
+    try {
+      const res = await fetch(`${API_URL}/csrf-token`, {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCsrfToken(data.payload.csrfToken);
+      }
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -29,6 +44,8 @@ function App() {
       if (data.success) {
         setUser(data.payload);
         setNewEmail(data.payload.email);
+        // Get CSRF token setelah auth berhasil
+        await getCsrfToken();
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -63,6 +80,8 @@ function App() {
         setNewEmail(data.payload.email);
         setUsername('');
         setPassword('');
+        // Get CSRF token setelah login
+        await getCsrfToken();
       }
     } catch (error) {
       setMessage('Login gagal');
@@ -73,22 +92,30 @@ function App() {
     try {
       await fetch(`${API_URL}/logout`, {
         method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken // Include CSRF token
+        },
         credentials: 'include'
       });
       setUser(null);
+      setCsrfToken('');
       setMessage('Logout berhasil');
     } catch (error) {
       setMessage('Logout gagal');
     }
   };
 
-  // VULNERABLE: Menggunakan dangerouslySetInnerHTML (XSS)
+  // SECURED: Menggunakan CSRF token
   const handleCreatePost = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch(`${API_URL}/post`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken // Include CSRF token
+        },
         credentials: 'include',
         body: JSON.stringify({ content: newPost })
       });
@@ -103,13 +130,16 @@ function App() {
     }
   };
 
-  // VULNERABLE: Tidak ada CSRF protection
+  // SECURED: Dengan CSRF protection
   const handleChangeEmail = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch(`${API_URL}/change-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken // Include CSRF token
+        },
         credentials: 'include',
         body: JSON.stringify({ email: newEmail })
       });
@@ -126,7 +156,7 @@ function App() {
   return (
     <>
       <header className="app-header">
-        <h1>🔓 Vulnerable 4chan</h1>
+        <h1>🔒 Secured 4chan</h1>
       </header>
 
       <div className="app">
@@ -213,15 +243,22 @@ function App() {
                   </div>
                 ) : (
                   posts.map((post) => {
+                    // SECURED: Sanitasi output dengan DOMPurify sebelum render
+                    const sanitizedContent = DOMPurify.sanitize(post.content, {
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li'],
+                      ALLOWED_ATTR: ['href', 'target'],
+                      ALLOW_DATA_ATTR: false
+                    });
+                    
                     return (
                       <div key={post.id} className="post card">
                         <div className="post-header">
                           <strong>{post.username}</strong>
                         </div>
-                        {/* VULNERABLE: Render HTML mentah */}
+                        {/* SECURED: Menggunakan DOMPurify untuk sanitasi */}
                         <div 
                           className="post-content"
-                          dangerouslySetInnerHTML={{ __html: post.content }} 
+                          dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
                         />
                       </div>
                     );

@@ -38,7 +38,8 @@ class PostsController {
                 return baseResponse(res, false, 401, 'User not found', null);
             }
             
-            // VULNERABLE: Tidak ada sanitasi input! (Stored XSS)
+            // SECURED: Input sudah disanitasi oleh XSS middleware
+            // CSRF token sudah divalidasi oleh middleware
             const newPost = await postsRepository.create(user.id, content);
             
             return baseResponse(res, true, 201, 'Post berhasil dibuat', {
